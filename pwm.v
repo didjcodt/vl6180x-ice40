@@ -21,47 +21,27 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-module top (
-   input CLK_12M,
-   output D1, output D2, output D3, output D4, output D5
+module pwm (
+   input        CLK,
+   input        NRST,
+   input [31:0] COUNTER,
+   input [31:0] PERIOD,
+   output       PWM_OUT
 );
 
-// Generate a reset-like signal on startup
-reg ready = 0;
-always @(posedge CLK_12M)
-   if (~ready) begin
-      ready <= 1;
+reg [31:0] counter;
+
+always @(posedge CLK)
+   if (~NRST) begin
+      counter <= 0;
+   end else begin
+      if (counter == COUNTER) begin
+         counter <= 0;
+      end else begin
+         counter <= counter + 1'b1;
+      end
    end
 
-wire [31:0] breath_out;
-breath breath_module (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .PERIOD(12_000_000),
-   .WAIT_PERIOD(10_000),
-   .OUT(breath_out)
-);
+assign PWM_OUT = NRST & (counter < PERIOD);
 
-wire pwm_out;
-pwm pwm_sig (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .COUNTER(1024),
-   .PERIOD(breath_out),
-   .PWM_OUT(pwm_out)
-);
-
-wire d1_count, d2_count, d3_count, d4_count, d5_count;
-led #(.COUNTER(1_000_000)) led_module (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .D1(d1_count), .D2(d2_count), .D3(d3_count), .D4(d4_count), .D5(d5_count)
-);
-
-assign D1 = d1_count & pwm_out;
-assign D2 = d2_count & pwm_out;
-assign D3 = d3_count & pwm_out;
-assign D4 = d4_count & pwm_out;
-assign D5 = d5_count & pwm_out;
-
-endmodule // top
+endmodule // pwm

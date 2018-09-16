@@ -20,48 +20,28 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
+`default_nettype none
+`timescale 1ns/1ps
 
-module top (
-   input CLK_12M,
-   output D1, output D2, output D3, output D4, output D5
+module testbench;
+
+reg CLK = 0;
+always #83.333333 CLK = ~CLK;
+
+wire D1, D2, D3, D4, D5;
+
+top dut (
+   .CLK_12M(CLK),
+   .D1(D1), .D2(D2), .D3(D3), .D4(D4), .D5(D5)
 );
 
-// Generate a reset-like signal on startup
-reg ready = 0;
-always @(posedge CLK_12M)
-   if (~ready) begin
-      ready <= 1;
-   end
+initial begin
+   repeat (1_000_000) @(posedge CLK);
+   $finish;
+end
 
-wire [31:0] breath_out;
-breath breath_module (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .PERIOD(12_000_000),
-   .WAIT_PERIOD(10_000),
-   .OUT(breath_out)
-);
+initial begin
+   $dumpvars;
+end
 
-wire pwm_out;
-pwm pwm_sig (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .COUNTER(1024),
-   .PERIOD(breath_out),
-   .PWM_OUT(pwm_out)
-);
-
-wire d1_count, d2_count, d3_count, d4_count, d5_count;
-led #(.COUNTER(1_000_000)) led_module (
-   .CLK(CLK_12M),
-   .NRST(ready),
-   .D1(d1_count), .D2(d2_count), .D3(d3_count), .D4(d4_count), .D5(d5_count)
-);
-
-assign D1 = d1_count & pwm_out;
-assign D2 = d2_count & pwm_out;
-assign D3 = d3_count & pwm_out;
-assign D4 = d4_count & pwm_out;
-assign D5 = d5_count & pwm_out;
-
-endmodule // top
+endmodule
