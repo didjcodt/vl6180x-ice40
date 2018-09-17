@@ -22,7 +22,9 @@
 // IN THE SOFTWARE.
 
 module top (
+   // System clock
    input CLK_12M,
+   // LEDs
    output D1, output D2, output D3, output D4, output D5
 );
 
@@ -33,6 +35,7 @@ always @(posedge CLK_12M)
       ready <= 1;
    end
 
+// LED animation
 wire [31:0] breath_out;
 breath breath_module (
    .CLK(CLK_12M),
