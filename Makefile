@@ -3,7 +3,7 @@ PROJ = project
 PIN_DEF = icestick.pcf
 DEVICE = hx1k
 
-BLIF_FILES = top.blif led.blif pwm.blif breath.blif
+BLIF_FILES = top.blif led.blif pwm.blif breath.blif i2c_master.blif
 
 .PHONY: all
 all: top.rpt top.bin

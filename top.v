@@ -25,7 +25,9 @@ module top (
    // System clock
    input CLK_12M,
    // LEDs
-   output D1, output D2, output D3, output D4, output D5
+   output D1, output D2, output D3, output D4, output D5,
+   // PMOD connector
+   input PMOD1, input PMOD2, input PMOD7, input PMOD8
 );
 
 // Generate a reset-like signal on startup
@@ -66,5 +68,33 @@ assign D2 = d2_count & pwm_out;
 assign D3 = d3_count & pwm_out;
 assign D4 = d4_count & pwm_out;
 assign D5 = d5_count & pwm_out;
+
+// I²C master
+// Arachne-pne currently does not support inferring tri-state IO, so manually
+// infer a SB_IO block
+// The internal pullup is enabled. This parameter is used only on bank 0, 1 and 2.
+// See http://www.latticesemi.com/~/media/LatticeSemi/Documents/TechnicalBriefs/SBTICETechnologyLibrary201504.pdf
+wire sda_i, sda_o, sda_e;
+wire scl_i, scl_o, scl_e;
+i2c_master #(.CLK_DIVIDER(1)) vl6180_master (
+   .CLK(CLK_12M),
+   .NRST(ready),
+   .SDA_I(sda_i), .SDA_O(sda_o), .SDA_E(sda_e),
+   .SCL_I(scl_i), .SCL_O(scl_o), .SCL_E(scl_e)
+);
+
+SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b1)) sda (
+   .PACKAGE_PIN(PMOD7),
+   .OUTPUT_ENABLE(sda_e),
+   .D_OUT_0(sda_o),
+   .D_IN_0(sda_i)
+);
+
+SB_IO #(.PIN_TYPE(6'b1010_01), .PULLUP(1'b1)) scl (
+   .PACKAGE_PIN(PMOD8),
+   .OUTPUT_ENABLE(scl_e),
+   .D_OUT_0(scl_o),
+   .D_IN_0(scl_i)
+);
 
 endmodule // top
